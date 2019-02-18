@@ -7,8 +7,6 @@ const dirtyChai = require('dirty-chai')
 const { expect } = chai
 chai.use(dirtyChai)
 
-const pull = require('pull-stream')
-
 const coder = require('../src/lib/coder')
 
 describe('coder', () => {

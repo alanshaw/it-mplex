@@ -22,6 +22,7 @@
     "bl": "^2.2.0",
     "debug": "^4.1.1",
     "pull-stream": "^3.6.9",
+    "pull-stream-to-async-iterator": "^1.0.1",
     "varint": "^5.0.0"
   },
   "devDependencies": {
