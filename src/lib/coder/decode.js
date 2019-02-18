@@ -1,7 +1,7 @@
 const varint = require('varint')
 const BufferList = require('bl')
 
-exports.decode = source => (async function * () {
+module.exports = source => (async function * decode () {
   const decoder = new Decoder()
   for await (const chunk of source) {
     const msgs = decoder.write(chunk)

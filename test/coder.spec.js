@@ -12,15 +12,16 @@ const pull = require('pull-stream')
 const coder = require('../src/lib/coder')
 
 describe('coder', () => {
-  it.skip('encodes header', () => {
-    pull(
-      pull.values([[17, 0, Buffer.from('17')]]),
-      coder.encode(),
-      pull.collect((err, data) => {
-        expect(err).to.not.exist()
-        expect(data[0]).to.be.eql(Buffer.from('880102', 'hex'))
-      })
-    )
+  it('encodes header', async () => {
+    const source = [{ id: 17, type: 0, data: Buffer.from('17') }]
+
+    let data = Buffer.alloc(0)
+    for await (const chunk of coder.encode(source)) {
+      data = Buffer.concat([data, chunk])
+    }
+
+    const expectedHeader = Buffer.from('880102', 'hex')
+    expect(data.slice(0, expectedHeader.length)).to.be.eql(expectedHeader)
   })
 
   it('decodes header', async () => {
@@ -31,19 +32,19 @@ describe('coder', () => {
     }
   })
 
-  it.skip('encodes several msgs into buffer', () => {
-    pull(
-      pull.values([
-        [17, 0, Buffer.from('17')],
-        [19, 0, Buffer.from('19')],
-        [21, 0, Buffer.from('21')]
-      ]),
-      coder.encode(),
-      pull.collect((err, data) => {
-        expect(err).to.not.exist()
-        expect(Buffer.concat(data)).to.be.eql(Buffer.from('88010231379801023139a801023231', 'hex'))
-      })
-    )
+  it('encodes several msgs into buffer', async () => {
+    const source = [
+      { id: 17, type: 0, data: Buffer.from('17') },
+      { id: 19, type: 0, data: Buffer.from('19') },
+      { id: 21, type: 0, data: Buffer.from('21') }
+    ]
+
+    let data = Buffer.alloc(0)
+    for await (const chunk of coder.encode(source)) {
+      data = Buffer.concat([data, chunk])
+    }
+
+    expect(data).to.be.eql(Buffer.from('88010231379801023139a801023231', 'hex'))
   })
 
   it('decodes msgs from buffer', async () => {
@@ -62,15 +63,15 @@ describe('coder', () => {
     ])
   })
 
-  it.skip('encodes zero length body msg', () => {
-    pull(
-      pull.values([[17, 0]]),
-      coder.encode(),
-      pull.collect((err, data) => {
-        expect(err).to.not.exist()
-        expect(data[0]).to.be.eql(Buffer.from('880100', 'hex'))
-      })
-    )
+  it('encodes zero length body msg', async () => {
+    const source = [{ id: 17, type: 0 }]
+
+    let data = Buffer.alloc(0)
+    for await (const chunk of coder.encode(source)) {
+      data = Buffer.concat([data, chunk])
+    }
+
+    expect(data).to.be.eql(Buffer.from('880100', 'hex'))
   })
 
   it('decodes zero length body msg', async () => {
