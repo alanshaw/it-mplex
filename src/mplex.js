@@ -3,16 +3,7 @@ const pushable = require('it-pushable')
 const log = require('debug')('it-mplex:mplex')
 const Coder = require('./lib/coder')
 const restrictSize = require('./lib/restrict-size')
-
-const Types = {
-  NEW_STREAM: 0,
-  MESSAGE_RECEIVER: 1,
-  MESSAGE_INITIATOR: 2,
-  CLOSE_RECEIVER: 3,
-  CLOSE_INITIATOR: 4,
-  RESET_RECEIVER: 5,
-  RESET_INITIATOR: 6
-}
+const Types = require('./lib/message-types')
 
 class Mplex {
   constructor (options) {
@@ -42,6 +33,7 @@ class Mplex {
             this.source.push({ id, type: Types.MESSAGE_INITIATOR, data })
           }
         } catch (err) {
+          log('error in stream %s', id, err)
           this.source.push({ id, type: Types.RESET_INITIATOR })
           this._streams.initiators.delete(id)
           return
@@ -70,6 +62,7 @@ class Mplex {
             this.source.push({ id, type: Types.MESSAGE_RECEIVER, data })
           }
         } catch (err) {
+          log('error in stream %s', id, err)
           this.source.push({ id, type: Types.RESET_RECEIVER })
           this._streams.receivers.delete(id)
           return
@@ -88,15 +81,20 @@ class Mplex {
 
   _createSink () {
     return async source => {
-      await pipe(
-        restrictSize(this._options.maxMsgSize),
-        Coder.decode,
-        async source => {
-          for await (const msg of source) {
-            this._handleIncoming(msg)
+      try {
+        await pipe(
+          restrictSize(this._options.maxMsgSize),
+          Coder.decode,
+          async source => {
+            for await (const msg of source) {
+              this._handleIncoming(msg)
+            }
           }
-        }
-      )
+        )
+      } catch (err) {
+        log(err)
+        this.source.end(err) // TODO: is this right?
+      }
     }
   }
 
