@@ -1,7 +1,7 @@
 # v2
 
 ```js
-const mplex = require('mplex-it')
+const mplex = require('it-mplex')
 const pipe = require('it-pipe')
 
 // Create a duplex muxer
@@ -18,11 +18,7 @@ pipe([1, 2, 3], stream, consume)
 
 // Receive a new stream on the muxed connection
 const onStream = stream => { /* ... */ }
-
-mc.on('stream', onStream)
-
-// Also...can be passed to mplex as optional param
-// const mc = mplex(onStream)
+const mc = mplex(onStream)
 
 // later, close the connection:
 await conn.close()
@@ -31,7 +27,7 @@ await conn.close()
 # v1
 
 ```js
-const mplex = require('mplex-it')
+const mplex = require('it-mplex')
 
 // Create a muxed connection
 const mc = mplex(conn) // conn is a interface-libp2p-connection

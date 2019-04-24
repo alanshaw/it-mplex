@@ -1,5 +1,5 @@
 {
-  "name": "mplex-it",
+  "name": "it-mplex",
   "version": "0.0.0",
   "description": "Implementation of mplex using async iterators",
   "main": "src/index.js",
@@ -18,11 +18,9 @@
   "license": "MIT",
   "dependencies": {
     "abortable-iterator": "^1.0.3",
-    "async-iterator-to-pull-stream": "^1.1.0",
     "bl": "^2.2.0",
     "debug": "^4.1.1",
-    "pull-stream": "^3.6.9",
-    "pull-stream-to-async-iterator": "^1.0.1",
+    "it-pushable": "^1.0.0",
     "varint": "^5.0.0"
   },
   "devDependencies": {
