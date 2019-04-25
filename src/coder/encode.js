@@ -1,3 +1,5 @@
+'use strict'
+
 const varint = require('varint')
 
 const POOL_SIZE = 10 * 1024

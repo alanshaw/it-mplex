@@ -7,7 +7,7 @@ const dirtyChai = require('dirty-chai')
 const { expect } = chai
 chai.use(dirtyChai)
 
-const coder = require('../src/lib/coder')
+const coder = require('../src/coder')
 
 describe('coder', () => {
   it('encodes header', async () => {

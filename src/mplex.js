@@ -1,9 +1,10 @@
 const pipe = require('it-pipe')
 const pushable = require('it-pushable')
 const log = require('debug')('it-mplex:mplex')
-const Coder = require('./lib/coder')
-const restrictSize = require('./lib/restrict-size')
-const Types = require('./lib/message-types')
+const Coder = require('./coder')
+const restrictSize = require('./restrict-size')
+const { MessageTypes } = require('./message-types')
+const createStream = require('./stream')
 
 class Mplex {
   constructor (options) {
@@ -12,70 +13,32 @@ class Mplex {
 
     this._streamId = 0
     this._streams = { initiators: new Map(), receivers: new Map() }
+    this._options = options
 
     this.sink = this._createSink()
     this.source = this._createSource()
-
-    this._options = options
+    this.onStream = options.onStream
   }
 
   // Initiate a new stream with the given name
   newStream (name) {
     const id = this._streamId++
     name = name == null ? id.toString() : String(name)
-
-    const stream = {
-      sink: async source => {
-        this.source.push({ id, type: Types.NEW_STREAM, data: name })
-
-        try {
-          for await (const data of source) {
-            this.source.push({ id, type: Types.MESSAGE_INITIATOR, data })
-          }
-        } catch (err) {
-          log('error in stream %s', id, err)
-          this.source.push({ id, type: Types.RESET_INITIATOR })
-          this._streams.initiators.delete(id)
-          return
-        }
-
-        this.source.push({ id, type: Types.CLOSE_INITIATOR })
-        this._streams.initiators.delete(id)
-      },
-      source: pushable()
-    }
-
+    const send = this.source.push
+    const onEnd = () => this._streams.initiators.delete(id)
+    const stream = createStream({ id, name, send, onEnd })
     this._streams.initiators.set(id, stream)
-
     return stream
   }
 
-  _newReceiverStream (id, name) {
+  _newReceiverStream ({ id, name }) {
     if (this._streams.receivers.has(id)) {
       throw new Error(`stream ${id} already exists!`)
     }
-
-    const stream = {
-      sink: async source => {
-        try {
-          for await (const data of source) {
-            this.source.push({ id, type: Types.MESSAGE_RECEIVER, data })
-          }
-        } catch (err) {
-          log('error in stream %s', id, err)
-          this.source.push({ id, type: Types.RESET_RECEIVER })
-          this._streams.receivers.delete(id)
-          return
-        }
-
-        this.source.push({ id, type: Types.CLOSE_RECEIVER })
-        this._streams.receivers.delete(id)
-      },
-      source: pushable()
-    }
-
+    const send = this.source.push
+    const onEnd = () => this._streams.receivers.delete(id)
+    const stream = createStream({ id, name, send, type: 'receiver', onEnd })
     this._streams.receivers.set(id, stream)
-
     return stream
   }
 
@@ -83,8 +46,8 @@ class Mplex {
     return async source => {
       try {
         await pipe(
-          restrictSize(this._options.maxMsgSize),
           Coder.decode,
+          restrictSize(this._options.maxMsgSize),
           async source => {
             for await (const msg of source) {
               this._handleIncoming(msg)
@@ -93,17 +56,25 @@ class Mplex {
         )
       } catch (err) {
         log(err)
-        this.source.end(err) // TODO: is this right?
+        const { initiators, receivers } = this._streams
+
+        // Abort all the things!
+        for (const s of initiators.values()) s.abort(err)
+        for (const s of receivers.values()) s.abort(err)
+
+        this.source.end(err) // Finally end the source with an error
       }
     }
   }
 
   _createSource () {
     const source = pushable()
-    const encodedSource = pipe(source, Coder.encode)
-    encodedSource.push = source.push
-    encodedSource.end = source.end
-    return encodedSource
+    const encodedSource = pipe(
+      source,
+      restrictSize(this._options.maxMsgSize),
+      Coder.encode
+    )
+    return Object.assign(encodedSource, { push: source.push, end: source.end })
   }
 
   _handleIncoming (msg) {
@@ -111,9 +82,9 @@ class Mplex {
     const { id, type, data } = msg
 
     // Create a new stream?
-    if (type === Types.NEW_STREAM && this._options.onStream) {
-      const stream = this._newReceiverStream(id, data.toString())
-      return this._options.onStream(stream)
+    if (type === MessageTypes.NEW_STREAM && this.onStream) {
+      const stream = this._newReceiverStream({ id, name: data.toString() })
+      return this.onStream(stream)
     }
 
     const list = type & 1 ? this._streams.initiators : this._streams.receivers
@@ -122,20 +93,17 @@ class Mplex {
     if (!stream) return log('missing stream %s', id)
 
     switch (type) {
-      // Push the data into the channel with the matching id if it exists
-      case Types.MESSAGE_INITIATOR:
-      case Types.MESSAGE_RECEIVER:
+      case MessageTypes.MESSAGE_INITIATOR:
+      case MessageTypes.MESSAGE_RECEIVER:
         stream.source.push(data)
         break
-      // Close the channel with the matching id
-      case Types.CLOSE_INITIATOR:
-      case Types.CLOSE_RECEIVER:
-        stream.source.end()
+      case MessageTypes.CLOSE_INITIATOR:
+      case MessageTypes.CLOSE_RECEIVER:
+        stream.close()
         break
-      // Destroys the channel with the matching id
-      case Types.RESET_INITIATOR:
-      case Types.RESET_RECEIVER:
-        stream.source.end()
+      case MessageTypes.RESET_INITIATOR:
+      case MessageTypes.RESET_RECEIVER:
+        stream.reset()
         break
       default:
         log('unknown message type %s', type)
