@@ -1,17 +1,17 @@
 # it-mplex
 
 ```js
-const mplex = require('it-mplex')
+const Mplex = require('it-mplex')
 const pipe = require('it-pipe')
 
 // Create a duplex muxer
-const mc = mplex()
+const muxer = new Mplex()
 
 // Use the muxer in a pipeline
-pipe(conn, mc, conn) // conn is a interface-libp2p-connection
+pipe(conn, muxer, conn) // conn is a interface-libp2p-connection
 
 // Create a new stream on the muxed connection
-const stream = mc.newStream()
+const stream = muxer.newStream()
 
 // Use this new stream like so:
 pipe([1, 2, 3], stream, consume)
@@ -35,16 +35,17 @@ const onStream = stream => {
     stream
   )
 }
-const mc = mplex(onStream)
+const muxer = new Mplex(onStream)
+// ...
 ```
 
 Abort the muxer and abort all the muxed streams:
 
 ```js
 const controller = new AbortController()
-const mc = mplex({ signal: abortController.signal, onStream })
+const muxer = new Mplex({ signal: abortController.signal, onStream })
 
-pipe(conn, mc, conn)
+pipe(conn, muxer, conn)
 
 controller.abort()
 ```

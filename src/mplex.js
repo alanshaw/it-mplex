@@ -25,8 +25,12 @@ class Mplex {
   newStream (name) {
     const id = this._streamId++
     name = name == null ? id.toString() : String(name)
+    log('new initiator stream %s %s', id, name)
     const send = this.source.push
-    const onEnd = () => this._streams.initiators.delete(id)
+    const onEnd = () => {
+      log('initiator stream %s ended', id)
+      this._streams.initiators.delete(id)
+    }
     const stream = createStream({ id, name, send, onEnd })
     this._streams.initiators.set(id, stream)
     return stream
@@ -36,8 +40,12 @@ class Mplex {
     if (this._streams.receivers.has(id)) {
       throw new Error(`stream ${id} already exists!`)
     }
+    log('new receiver stream %s %s', id, name)
     const send = this.source.push
-    const onEnd = () => this._streams.receivers.delete(id)
+    const onEnd = () => {
+      log('receiver stream %s ended', id)
+      this._streams.receivers.delete(id)
+    }
     const stream = createStream({ id, name, send, type: 'receiver', onEnd })
     this._streams.receivers.set(id, stream)
     return stream

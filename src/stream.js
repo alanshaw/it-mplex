@@ -11,6 +11,22 @@ module.exports = ({ id, name, send, onEnd, type = 'initiator' }) => {
   const resetController = new AbortController()
   const Types = type === 'initiator' ? InitiatorMessageTypes : ReceiverMessageTypes
 
+  let sourceEnded = false
+  let sinkEnded = false
+  let endErr
+
+  const onSourceEnd = err => {
+    sourceEnded = true
+    if (err) endErr = err
+    if (sinkEnded) onEnd(err || endErr)
+  }
+
+  const onSinkEnd = err => {
+    sinkEnded = true
+    if (err) endErr = err
+    if (sourceEnded) onEnd(err || endErr)
+  }
+
   const stream = {
     close: () => stream.source.end(), // Close for reading
     abort: err => { // Close for reading and writing (local error)
@@ -41,12 +57,14 @@ module.exports = ({ id, name, send, onEnd, type = 'initiator' }) => {
           log('%s stream %s error', type, name || id, err)
           send({ id, type: Types.RESET })
         }
-        return onEnd(err)
+        return onSinkEnd(err)
       }
 
       send({ id, type: Types.CLOSE })
-      return onEnd()
+      onSinkEnd()
     },
-    source: pushable()
+    source: pushable(onSourceEnd)
   }
+
+  return stream
 }
