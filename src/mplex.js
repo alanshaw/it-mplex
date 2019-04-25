@@ -1,6 +1,7 @@
 const pipe = require('it-pipe')
 const pushable = require('it-pushable')
 const log = require('debug')('it-mplex:mplex')
+const abortable = require('abortable-iterator')
 const Coder = require('./coder')
 const restrictSize = require('./restrict-size')
 const { MessageTypes } = require('./message-types')
@@ -44,8 +45,13 @@ class Mplex {
 
   _createSink () {
     return async source => {
+      if (this._options.signal) {
+        source = abortable(source, this._options.signal)
+      }
+
       try {
         await pipe(
+          source,
           Coder.decode,
           restrictSize(this._options.maxMsgSize),
           async source => {
@@ -110,5 +116,7 @@ class Mplex {
     }
   }
 }
+
+Mplex.multicodec = '/mplex/6.7.0'
 
 module.exports = Mplex

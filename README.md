@@ -1,4 +1,4 @@
-# v2
+# mplex-it
 
 ```js
 const mplex = require('it-mplex')
@@ -11,38 +11,40 @@ const mc = mplex()
 pipe(conn, mc, conn) // conn is a interface-libp2p-connection
 
 // Create a new stream on the muxed connection
-const stream = await mc.newStream()
+const stream = mc.newStream()
 
 // Use this new stream like so:
 pipe([1, 2, 3], stream, consume)
-
-// Receive a new stream on the muxed connection
-const onStream = stream => { /* ... */ }
-const mc = mplex(onStream)
-
-// later, close the connection:
-await conn.close()
 ```
 
-# v1
+How does the other end create a stream?
 
 ```js
-const mplex = require('it-mplex')
-
-// Create a muxed connection
-const mc = mplex(conn) // conn is a interface-libp2p-connection
-
-//. Create a new stream on the muxed connection
-const stream = await mc.newStream()
-
 // Receive a new stream on the muxed connection
-const onStream = stream => { /* ... */ }
+const onStream = stream => {
+  // Read from this stream and write back to it (echo server)
+  pipe(
+    stream,
+    source => {
+      return (async function * () {
+        for await (const data of source) {
+          yield data
+        }
+      })()
+    }
+    stream
+  )
+}
+const mc = mplex(onStream)
+```
 
-mc.on('stream', onStream)
+Abort the muxer and abort all the muxed streams:
 
-// Also...can be passed to mplex as second param
-// const mc = mplex(conn, onStream)
+```js
+const controller = new AbortController()
+const mc = mplex({ signal: abortController.signal, onStream })
 
-// Close the connection
-await mc.close()
+pipe(conn, mc, conn)
+
+controller.abort()
 ```
