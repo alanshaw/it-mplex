@@ -1,4 +1,4 @@
-# mplex-it
+# it-mplex
 
 ```js
 const mplex = require('it-mplex')
