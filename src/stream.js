@@ -18,13 +18,13 @@ module.exports = ({ id, name, send, onEnd, type = 'initiator' }) => {
   const onSourceEnd = err => {
     sourceEnded = true
     if (err) endErr = err
-    if (sinkEnded) onEnd(err || endErr)
+    if (sinkEnded) onEnd(endErr)
   }
 
   const onSinkEnd = err => {
     sinkEnded = true
     if (err) endErr = err
-    if (sourceEnded) onEnd(err || endErr)
+    if (sourceEnded) onEnd(endErr)
   }
 
   const stream = {

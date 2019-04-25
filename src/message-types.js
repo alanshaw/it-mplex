@@ -24,3 +24,10 @@ exports.ReceiverMessageTypes = Object.freeze({
   CLOSE: MessageTypes.CLOSE_RECEIVER,
   RESET: MessageTypes.RESET_RECEIVER
 })
+
+exports.MessageTypeNames = Object.freeze(
+  Object.entries(MessageTypes).reduce((obj, e) => {
+    obj[e[1]] = e[0]
+    return obj
+  }, {})
+)

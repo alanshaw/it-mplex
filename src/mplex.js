@@ -4,7 +4,7 @@ const log = require('debug')('it-mplex:mplex')
 const abortable = require('abortable-iterator')
 const Coder = require('./coder')
 const restrictSize = require('./restrict-size')
-const { MessageTypes } = require('./message-types')
+const { MessageTypes, MessageTypeNames } = require('./message-types')
 const createStream = require('./stream')
 
 class Mplex {
@@ -91,9 +91,10 @@ class Mplex {
     return Object.assign(encodedSource, { push: source.push, end: source.end })
   }
 
-  _handleIncoming (msg) {
-    log('incoming message', msg)
-    const { id, type, data } = msg
+  _handleIncoming ({ id, type, data }) {
+    if (log.enabled) {
+      log('incoming message', { id, type: MessageTypeNames[type], data: data.slice() })
+    }
 
     // Create a new stream?
     if (type === MessageTypes.NEW_STREAM && this.onStream) {
