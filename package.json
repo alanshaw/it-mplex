@@ -24,7 +24,7 @@
     "debug": "^4.1.1",
     "interface-connection": "^0.3.3",
     "it-pipe": "^1.0.1",
-    "it-pushable": "^1.1.0",
+    "it-pushable": "^1.1.1",
     "pull-stream": "^3.6.9",
     "varint": "^5.0.0"
   },

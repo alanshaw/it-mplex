@@ -70,25 +70,29 @@ class Mplex {
         )
       } catch (err) {
         log(err)
-        const { initiators, receivers } = this._streams
-
-        // Abort all the things!
-        for (const s of initiators.values()) s.abort(err)
-        for (const s of receivers.values()) s.abort(err)
-
-        this.source.end(err) // Finally end the source with an error
+        this.source.end(err) // End the source with an error
       }
     }
   }
 
   _createSource () {
-    const source = pushable()
+    const onEnd = err => {
+      const { initiators, receivers } = this._streams
+      // Abort all the things!
+      for (const s of initiators.values()) s.abort(err)
+      for (const s of receivers.values()) s.abort(err)
+    }
+    const source = pushable(onEnd)
     const encodedSource = pipe(
       source,
       restrictSize(this._options.maxMsgSize),
       Coder.encode
     )
-    return Object.assign(encodedSource, { push: source.push, end: source.end })
+    return Object.assign(encodedSource, {
+      push: source.push,
+      end: source.end,
+      return: source.return
+    })
   }
 
   _handleIncoming ({ id, type, data }) {
