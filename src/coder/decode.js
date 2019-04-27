@@ -41,13 +41,21 @@ class Decoder {
 
     if (this._buffer.length < length) return [] // not got enough data yet
 
+    if (this._buffer.length === length) {
+      const msg = { id, type, data: this._buffer }
+
+      this._headerInfo = null
+      this._buffer = new BufferList()
+
+      return [msg]
+    }
+
     const msg = { id, type, data: this._buffer.shallowSlice(0, length) }
     const rest = this._buffer.shallowSlice(length)
 
     this._headerInfo = null
     this._buffer = new BufferList()
 
-    if (!rest.length) return [msg]
     return [msg, ...this.write(rest)]
   }
 
