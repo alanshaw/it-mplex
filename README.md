@@ -1,6 +1,6 @@
 # it-mplex
 
-> JavaScript implementation of [mplex](https://github.com/libp2p/mplex).
+> JavaScript implementation of [mplex](https://github.com/libp2p/specs/tree/master/mplex).
 
 ## Install
 
