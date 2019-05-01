@@ -10,9 +10,10 @@
     "test": "aegir test -t node -t browser",
     "test:node": "aegir test -t node",
     "test:browser": "aegir test -t browser",
+    "coverage": "nyc --reporter=text --reporter=lcov npm run test:node",
     "release": "aegir release -t node -t browser",
-    "release-minor": "aegir release --type minor -t node -t browser",
-    "release-major": "aegir release --type major -t node -t browser"
+    "release:minor": "aegir release --type minor -t node -t browser",
+    "release:major": "aegir release --type major -t node -t browser"
   },
   "author": "Alan Shaw",
   "license": "MIT",
@@ -32,6 +33,8 @@
     "aegir": "^18.1.0",
     "chai": "^4.2.0",
     "dirty-chai": "^2.0.1",
-    "interface-stream-muxer": "github:libp2p/interface-stream-muxer#refactor/async-iterators"
+    "interface-stream-muxer": "github:libp2p/interface-stream-muxer#refactor/async-iterators",
+    "random-bytes": "^1.0.0",
+    "streaming-iterables": "^4.1.0"
   }
 }
