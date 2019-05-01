@@ -65,6 +65,10 @@ pipe(conn, muxer, conn) // conn is duplex connection to another peer
     const muxer = new Mplex({ onStream })
     // ...
     ```
+    Note: The `onStream` function can be passed in place of the `options` object. i.e.
+    ```js
+    new Mplex(stream => { /* ... */ })
+    ```
 * `signal` - An [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) which can be used to abort the muxer, _including_ all of it's multiplexed connections. e.g.
     ```js
     const controller = new AbortController()
