@@ -32,6 +32,6 @@
     "aegir": "^18.1.0",
     "chai": "^4.2.0",
     "dirty-chai": "^2.0.1",
-    "interface-stream-muxer": "^0.6.0"
+    "interface-stream-muxer": "github:libp2p/interface-stream-muxer#refactor/async-iterators"
   }
 }
