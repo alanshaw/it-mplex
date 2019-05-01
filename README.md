@@ -128,6 +128,10 @@ Use this property as an alternative to passing `onStream` as an option to the `M
 
 ## Notes
 
+### Buffer list
+
+Data received by multiplexed streams are instances of [`BufferList`](https://www.npmjs.com/package/bl) not [`Buffer`](https://www.npmjs.com/package/buffer). This is to avoid unnecessary (and slow) buffer copies in some cases.
+
 ### No events
 
 `Mplex` is not an event emitter, nor are any of the streams it receives or creates.
