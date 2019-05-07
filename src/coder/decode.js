@@ -16,7 +16,7 @@ class Decoder {
     this._buffer = new BufferList()
     // optimisation to allow varint to take a bl (well a proxy to)
     this._bufferProxy = new Proxy({}, {
-      get: (_, prop) => prop[0] === 'l' ? this._buffer[prop] : this._buffer.get(prop)
+      get: (_, prop) => prop[0] === 'l' ? this._buffer[prop] : this._buffer.get(parseInt(prop))
     })
     this._headerInfo = null
   }
